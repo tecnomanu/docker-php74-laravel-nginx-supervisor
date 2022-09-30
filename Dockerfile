@@ -7,7 +7,7 @@ RUN echo "UTC" > /etc/timezone
 RUN apk add --no-cache zip unzip curl sqlite nginx supervisor
 
 RUN apk add libzip-dev nodejs npm
-RUN apk add php7-cgi php7-bcmath php7-gd php7-mysqli php7-zlib php7-curl php7-zip gmp-dev
+RUN apk add php7-cgi php7-bcmath php7-gd php7-mysqli php7-zlib php7-curl php7-zip gmp-dev libzip-dev
 
 RUN apk --no-cache add php7-mbstring php7-iconv
 
