@@ -9,97 +9,97 @@ RUN apk add --no-cache zip unzip curl sqlite nginx supervisor
 RUN apk add nodejs npm
 
 RUN apk add --no-cache  php7-cgi php7-bcmath \
-            php7-gd \ 
-            php7-mysqli  \
-            php7-zlib  \
-            php7-curl  \
-            php7-zip  \
-            php7-mbstring \
-            php7-iconv \
-            gmp-dev
+    php7-gd \ 
+    php7-mysqli  \
+    php7-zlib  \
+    php7-curl  \
+    php7-zip  \
+    php7-mbstring \
+    php7-iconv \
+    gmp-dev
 
 # dependencies required for running "phpize"
 # these get automatically installed and removed by "docker-php-ext-*" (unless they're already installed)
 ENV PHPIZE_DEPS \
-        autoconf \
-        dpkg-dev \
-        dpkg \
-        file \
-        g++ \
-        gcc \
-        libc-dev \
-        make \
-        pkgconf \
-        re2c \
-        wget
+    autoconf \
+    dpkg-dev \
+    dpkg \
+    file \
+    g++ \
+    gcc \
+    libc-dev \
+    make \
+    pkgconf \
+    re2c \
+    wget
 
 # Install packages
 RUN set -eux; \
     # Packages needed only for build
     apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS \
+    $PHPIZE_DEPS \
     && \
     # Packages to install
     apk add --no-cache \
-        $PHPIZE_DEPS \
-        bzip2-dev \
-        ca-certificates \
-        curl \
-        fcgi \
-        freetype-dev \
-        gettext-dev \
-        gnu-libiconv \
-        icu-dev \
-        imagemagick \
-        imagemagick-dev \
-        libjpeg-turbo-dev \
-        libmcrypt-dev \
-        libpng \
-        libpng-dev \
-        libressl-dev \
-        libtool \
-        libwebp-dev \
-        libxml2-dev \
-        libzip-dev \
-        oniguruma-dev \
-        unzip \
+    $PHPIZE_DEPS \
+    bzip2-dev \
+    ca-certificates \
+    curl \
+    fcgi \
+    freetype-dev \
+    gettext-dev \
+    gnu-libiconv \
+    icu-dev \
+    imagemagick \
+    imagemagick-dev \
+    libjpeg-turbo-dev \
+    libmcrypt-dev \
+    libpng \
+    libpng-dev \
+    libressl-dev \
+    libtool \
+    libwebp-dev \
+    libxml2-dev \
+    libzip-dev \
+    oniguruma-dev \
+    unzip \
     && \
     # pecl PHP extensions
     pecl install \
-        imagick-3.4.4 \
-        redis \
+    imagick-3.4.4 \
+    redis \
     && \
     # Configure PHP extensions
     docker-php-ext-configure \
-        # ref: https://github.com/docker-library/php/issues/920#issuecomment-562864296
-        gd --enable-gd --with-freetype --with-jpeg --with-webp \
+    # ref: https://github.com/docker-library/php/issues/920#issuecomment-562864296
+    gd --enable-gd --with-freetype --with-jpeg --with-webp \
     && \
     # Install PHP extensions
     docker-php-ext-install \
-        bcmath \
-        bz2 \
-        exif \
-        ftp \
-        gettext \
-        gd \
-        iconv \
-        intl \
-        gmp \
-        mbstring \
-        opcache \
-        pdo \
-        pdo_mysql \
-        shmop \
-        sockets \
-        sysvmsg \
-        sysvsem \
-        sysvshm \
-        zip \
+    bcmath \
+    bz2 \
+    exif \
+    ftp \
+    gettext \
+    gd \
+    iconv \
+    intl \
+    gmp \
+    mbstring \
+    opcache \
+    pdo \
+    pdo_mysql \
+    shmop \
+    sockets \
+    sysvmsg \
+    sysvsem \
+    sysvshm \
+    zip \
     && \
     # Enable PHP extensions
     docker-php-ext-enable \
-        imagick \
-        redis \
+    imagick \
+    redis \
     && \
     # Remove the build deps
     apk del .build-deps \
@@ -109,7 +109,21 @@ RUN set -eux; \
 
 
 # fix work iconv library with alphine
-ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so
+RUN apk add patch
+
+RUN rm /usr/bin/iconv \
+    && curl -SL http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz | tar -xz -C . \
+    && cd libiconv-1.14 \
+    && ./configure --prefix=/usr/local \
+    && curl -SL https://raw.githubusercontent.com/mxe/mxe/7e231efd245996b886b501dad780761205ecf376/src/libiconv-1-fixes.patch \
+    | patch -p1 -u  \
+    && make \
+    && make install \
+    && libtool --finish /usr/local/lib \
+    && cd .. \
+    && rm -rf libiconv-1.14
+
+ENV LD_PRELOAD /usr/local/lib/preloadable_libiconv.so
 
 # Installing bash
 RUN apk add bash
